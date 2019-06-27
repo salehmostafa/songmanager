@@ -1,16 +1,21 @@
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.JTextArea;
+import javax.swing.JSlider;
 
 public class QueueController extends JFrame {
 
@@ -24,12 +29,14 @@ public class QueueController extends JFrame {
 	
 	private DefaultListModel<Song> model;
 	private JList<Song> songQueue;
+	
+	private JSlider songTime;
 
 	/**
 	 * Create the frame.
 	 */
 	public QueueController() {
-		this.queue = new SongQueue();
+		this.queue = new SongQueue(this);
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 500, 350);
@@ -68,84 +75,19 @@ public class QueueController extends JFrame {
 		});
 		contentPane.add(addSong);
 		
-		JButton skip = new JButton("Next");
-		skip.setBounds(6, 118, 134, 29);
-		skip.addActionListener(l -> queue.doAction(Command.PLAY_NEXT_SONG));
-		contentPane.add(skip);
-		
-		JButton pause = new JButton("Pause");
-		pause.setBounds(152, 81, 134, 29);
-		pause.addActionListener(l -> queue.doAction(Command.PAUSE_SONG));
-		contentPane.add(pause);
-		
-		JButton resume = new JButton("Play");
+		JButton resume = new JButton("Play/Pause");
 		resume.setBounds(6, 81, 134, 29);
-		resume.addActionListener(l -> queue.doAction(Command.PLAY_SONG));
+		resume.addActionListener(l -> queue.doAction(queue.isPlaying() ? Command.PAUSE_SONG : Command.PLAY_SONG));
 		contentPane.add(resume);
 		
-		JButton restart = new JButton("Restart Song");
-		restart.setBounds(6, 159, 134, 29);
-		restart.addActionListener(l -> queue.doAction(Command.RESTART_SONG));
-		contentPane.add(restart);
-		
-		JButton btnPlayLastSong = new JButton("Back");
-		btnPlayLastSong.setBounds(152, 118, 134, 29);
-		btnPlayLastSong.addActionListener(l -> queue.doAction(Command.PLAY_LAST_SONG));
-		contentPane.add(btnPlayLastSong);
-		
-		JButton btnStartOver = new JButton("Restart Queue");
-		btnStartOver.setBounds(152, 159, 134, 29);
-		btnStartOver.addActionListener(l -> queue.doAction(Command.RESTART_QUEUE));
-		contentPane.add(btnStartOver);
-		
-		JButton btnRepeat = new JButton("Repeat Song");
-		btnRepeat.setBounds(6, 203, 134, 29);
-		btnRepeat.addActionListener(l -> queue.doAction(Command.REPEAT_CURRENT_SONG));
-		contentPane.add(btnRepeat);
-		
-		JButton slower = new JButton("Slower");
-		slower.setBounds(6, 244, 134, 29);
-		slower.addActionListener(l -> queue.doAction(Command.MAKE_SLOWER));
-		contentPane.add(slower);
-		
-		JButton faster = new JButton("Faster");
-		faster.setBounds(152, 244, 134, 29);
-		faster.addActionListener(l -> queue.doAction(Command.MAKE_FASTER));
-		contentPane.add(faster);
-		
-		JButton btnVolumeUp = new JButton("Volume Up");
-		btnVolumeUp.setBounds(152, 285, 134, 29);
-		btnVolumeUp.addActionListener(l -> queue.doAction(Command.LOUDER));
-		contentPane.add(btnVolumeUp);
-		
-		JButton btnVolumeDown = new JButton("Volume Down");
-		btnVolumeDown.setBounds(6, 285, 134, 29);
-		btnVolumeDown.addActionListener(l -> queue.doAction(Command.QUIETER));
-		contentPane.add(btnVolumeDown);
-		
 		JButton btnShuffle = new JButton("Shuffle");
-		btnShuffle.setBounds(152, 203, 134, 29);
+		btnShuffle.setBounds(152, 81, 134, 29);
 		btnShuffle.addActionListener(l -> queue.doAction(Command.SHUFFLE));
 		contentPane.add(btnShuffle);
 		
-		JTextArea txtrAddCurrentSongs = new JTextArea();
-		txtrAddCurrentSongs.setText("ADD CURRENT SONGS LIST");
-		txtrAddCurrentSongs.setBounds(298, 203, 169, 16);
-		contentPane.add(txtrAddCurrentSongs);
-		
-		JTextArea txtrAddLoadSong = new JTextArea();
-		txtrAddLoadSong.setText("ADD LOAD SONG");
-		txtrAddLoadSong.setBounds(298, 231, 169, 16);
-		contentPane.add(txtrAddLoadSong);
-		
-		JTextArea txtrAddSaveSong = new JTextArea();
-		txtrAddSaveSong.setText("ADD SAVE SONG (NAME)");
-		txtrAddSaveSong.setBounds(298, 259, 196, 16);
-		contentPane.add(txtrAddSaveSong);
-		
 		JTextArea txtrAddCurrentSong = new JTextArea();
 		txtrAddCurrentSong.setText("ADD CURRENT SONG");
-		txtrAddCurrentSong.setBounds(298, 288, 169, 16);
+		txtrAddCurrentSong.setBounds(311, 215, 169, 16);
 		contentPane.add(txtrAddCurrentSong);
 		
 		JTextArea txtrCurrentSongList = new JTextArea();
@@ -167,6 +109,83 @@ public class QueueController extends JFrame {
 		});
 		contentPane.add(btnQueue);
 		
+		JTextArea txtrVolume = new JTextArea();
+		txtrVolume.setText("Volume: ");
+		txtrVolume.setBounds(16, 166, 55, 16);
+		contentPane.add(txtrVolume);
+		
+		JSlider volume = new JSlider();
+		volume.setBounds(93, 161, 186, 29);
+		volume.setMajorTickSpacing(50);
+		volume.setMinorTickSpacing(25);
+		volume.setPaintTicks(true);
+		volume.addChangeListener(l -> queue.setVolume(volume.getValue()));
+		contentPane.add(volume);
+		
+		JTextArea txtrSpeed = new JTextArea();
+		txtrSpeed.setText("Speed: ");
+		txtrSpeed.setBounds(16, 128, 55, 16);
+		contentPane.add(txtrSpeed);
+		
+		JSlider speed = new JSlider(0, 200);
+		speed.setBounds(93, 122, 180, 29);
+		speed.setValue(100);
+		speed.addChangeListener(l -> queue.setRate(speed.getValue()));
+		speed.setMajorTickSpacing(100);
+		speed.setMinorTickSpacing(25);
+		speed.setSnapToTicks(true);
+		speed.setPaintTicks(true);
+		contentPane.add(speed);
+		
+		JTextArea txtrSongTime = new JTextArea();
+		txtrSongTime.setText("Song time: ");
+		txtrSongTime.setBounds(16, 204, 65, 16);
+		contentPane.add(txtrSongTime);
+		
+		songTime = new JSlider();
+		songTime.setBounds(93, 200, 186, 29);
+		songTime.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				queue.goToTime(songTime.getValue());
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				queue.goToTime(songTime.getValue());
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+		});
+		contentPane.add(songTime);
+		
 		setVisible(true);
+		setupComponents(contentPane.getBackground(), this);
+	}
+	
+	public void updateSongTime() {
+		songTime.setValue((int) (queue.getCurrentSongTime()));
+	}
+	
+	private static void setupComponents(Color color, Component c) {
+		if(c instanceof JTextArea) {
+			c.setBackground(color);
+			((JTextArea) c).setEditable(false);
+			return;
+		} else if(c instanceof Container) {
+			for(Component cp : ((Container) c).getComponents()) {
+				setupComponents(color, cp);
+			}
+		}
 	}
 }

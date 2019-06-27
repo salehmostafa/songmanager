@@ -36,6 +36,6 @@ public class Song {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(new Song("filepath/hi/hiiii mY nAME jEFF.mp4").toString());
+		System.out.println(new Song("test.mp4").toString());
 	}
 }

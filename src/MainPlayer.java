@@ -1,5 +1,3 @@
-
-
 import javafx.application.Application;
 import javafx.stage.*;
 
@@ -10,7 +8,7 @@ public class MainPlayer extends Application {
 	}
 
 	@Override
-	public void start(Stage arg0) throws Exception {
+	public void start(Stage arg0) {
 		QueueController controller = new QueueController();
 	}
 }
